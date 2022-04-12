@@ -110,8 +110,7 @@ Speed SpeedManager::max_speed(Direction dir) {
         MOTOR_STEP_DEG / (MOTOR_STEP_NUM * Config::inst().data.gearbox_ratio);
     if (stepper_step < 0) {
         stepper_step = -stepper_step;
-        return Speed(neg(dir), SpeedType::DEGREE,
-                 1000000 / double(MOTOR_MIN_DELAY_US) * stepper_step);
+        dir = neg(dir);
     }
     return Speed(dir, SpeedType::DEGREE,
                  1000000 / double(MOTOR_MIN_DELAY_US) * stepper_step);
