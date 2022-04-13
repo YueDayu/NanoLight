@@ -28,11 +28,11 @@ html, body, #root {
   }
 
   .btn-bar .btn {
-    height: 40%;
+    height: 25%;
     width: 70%;
     writing-mode: vertical-lr;
     padding: 10%;
-    margin: 25% 0;
+    margin: 20% 0;
     font-size: 1.3em;
     line-height: 1.4em;
   }

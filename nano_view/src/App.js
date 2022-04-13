@@ -1,6 +1,6 @@
 import React from 'react';
 
-import {Button, Card, Form, Modal} from 'react-bootstrap';
+import {Button, ButtonGroup, Card, Form, Modal} from 'react-bootstrap';
 
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
@@ -16,9 +16,9 @@ class VISUAL_MODE {
   static str(mode) {
     switch (mode) {
       case this.DARK:
-        return "红光模式";
+        return "红光";
       case this.NORMAL:
-        return "正常模式";
+        return "正常";
       default:
         return "UNKNOWN";
     }
@@ -32,6 +32,26 @@ class VISUAL_MODE {
   }
 }
 
+class DIR_MODE {
+  static SKY = 0;
+  static TIME_LAPSE = 1;
+
+  static not(mode) {
+    return 1 - mode;
+  }
+
+  static str(mode) {
+    switch (mode) {
+      case this.SKY:
+        return "天文";
+      case this.TIME_LAPSE:
+        return "延时";
+      default:
+        return "UNKNOWN";
+    }
+  }
+}
+
 class DIRECTION {
   static POS = 0;
   static NEG = 1;
@@ -40,9 +60,9 @@ class DIRECTION {
   static str_clock(direction) {
     switch (direction) {
       case this.POS:
-        return "逆时针";
-      case this.NEG:
         return "顺时针";
+      case this.NEG:
+        return "逆时针";
       default:
         return "停止";
     }
@@ -55,7 +75,7 @@ class DIRECTION {
       case this.NEG:
         return "南半球";
       default:
-        return "STOP";
+        return "停止";
     }
   }
 }
@@ -111,6 +131,7 @@ class App extends React.Component {
     this.state = {
       // visual config
       visual_mode: VISUAL_MODE.NORMAL,
+      dir_mode: DIR_MODE.SKY,
       // display info, fetch from server
       // status_fetched: false,
       status_direction: DIRECTION.STOP,
@@ -120,10 +141,10 @@ class App extends React.Component {
       input_speed: this.default_speed_list[0],
       input_direction: this.default_direction_list[0],
       // config info
-      config_fetched: true,
+      config_fetched: false,
       config_ssid: "",
       config_pwd: "",
-      config_ratio: 100,
+      config_ratio: 0,
       config_ssid_user: "",
       config_pwd_user: "",
       config_ratio_user: 0,
@@ -138,6 +159,10 @@ class App extends React.Component {
   ///////> element callback
   trigger_visual_mode() {
     this.setState({visual_mode: VISUAL_MODE.not(this.state.visual_mode)});
+  }
+
+  trigger_dir_mode() {
+    this.setState({dir_mode: DIR_MODE.not(this.state.dir_mode)});
   }
 
   trigger_config() {
@@ -216,10 +241,12 @@ class App extends React.Component {
     return (
       <div className={"APP " + VISUAL_MODE.classname(this.state.visual_mode)}>
         <div className="btn-bar">
-          <Button bsSize="large" disabled={this.state.status_direction !== DIRECTION.STOP}
+          <Button className="round_btn" bsSize="large" disabled={this.state.status_direction !== DIRECTION.STOP}
                   onClick={this.trigger_config.bind(this)}>设置</Button>
           <Button bsSize="large"
-                  onClick={this.trigger_visual_mode.bind(this)}>{VISUAL_MODE.str(VISUAL_MODE.not(this.state.visual_mode))}</Button>
+            onClick={this.trigger_dir_mode.bind(this)}>{DIR_MODE.str(DIR_MODE.not(this.state.dir_mode))}</Button>
+          <Button bsSize="large"
+            onClick={this.trigger_visual_mode.bind(this)}>{VISUAL_MODE.str(VISUAL_MODE.not(this.state.visual_mode))}</Button>
         </div>
         <div className="card-div">
           <Card>
@@ -231,8 +258,11 @@ class App extends React.Component {
                   <div>
                     <h4>方向</h4>
                     <div className="info-pad">
-                      <p>{DIRECTION.str_clock(this.state.status_direction)}</p>
-                      <p>{DIRECTION.str(this.state.status_direction)}</p>
+                      <small>{DIR_MODE.str(this.state.dir_mode)}模式</small>
+                      <p>{
+                        this.state.dir_mode === DIR_MODE.SKY ? 
+                          DIRECTION.str_clock(this.state.status_direction) : 
+                          DIRECTION.str(this.state.status_direction)}</p>
                     </div>
                   </div>
                   <div>
@@ -296,7 +326,9 @@ class App extends React.Component {
                         <Form.Check type={`radio`} name="direction_group" id={"direction-" + d}>
                           <Form.Check.Input type={`radio`} name="direction_group" defaultChecked={i === 0}
                                             onChange={this.handle_direction_check.bind(this, d)}/>
-                          <Form.Check.Label>{DIRECTION.str_clock(d) + ":" + DIRECTION.str(d)}</Form.Check.Label>
+                          <Form.Check.Label>{
+                            this.state.dir_mode === DIR_MODE.SKY ? 
+                              DIRECTION.str(d) : DIRECTION.str_clock(d)}</Form.Check.Label>
                         </Form.Check>
                       ))}
                     </div>

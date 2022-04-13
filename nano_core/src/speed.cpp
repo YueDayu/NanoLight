@@ -94,7 +94,7 @@ Speed SpeedManager::get_speed(int id) {
         return Speed(Direction::STOP, SpeedType::DEGREE, 0);
     }
     auto i = id & 0x7;
-    auto dir = Direction(id >> 3);
+    auto dir = neg(Direction(id >> 3));
     if (i == 1) {
         return max_speed(dir);
     }
