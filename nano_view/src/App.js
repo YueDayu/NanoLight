@@ -140,6 +140,7 @@ class App extends React.Component {
       // user input
       input_speed: this.default_speed_list[0],
       input_direction: this.default_direction_list[0],
+      btn_touched: false,
       // config info
       config_fetched: false,
       config_ssid: "",
@@ -154,7 +155,89 @@ class App extends React.Component {
     };
   }
 
+  componentDidMount() {
+    setInterval(this.fetch_status.bind(this), 1000);
+    this.fetch_config();
+  }
+
   ///////> network handler
+  fetch_status() {
+    fetch("/status", {
+      method: 'POST'
+    }).then(function (response) {
+      if (response.ok) {
+        return response.json();
+      }
+      throw new Error('error');
+    }).then(data => this.update_status(data)).catch(err => this.failed_handle(err));
+  }
+
+  fetch_config() {
+    fetch("/config", {
+      method: 'POST'
+    }).then(function (response) {
+      if (response.ok) {
+        return response.json();
+      }
+      throw new Error('error');
+    }).then(data => this.update_config(data)).catch(err => {
+      setTimeout(this.fetch_config.bind(this), 1000);
+    });
+  }
+
+  set_speed(dir, speed) {
+    return fetch("/set_status", {
+      method: "POST",
+      body: JSON.stringify({
+        d: dir,
+        t: speed.type,
+        s: speed.speed
+      })
+    }).then(function (response) {
+      if (response.ok) {
+        return response.json();
+      }
+      throw new Error('error');
+    }).then(data => this.update_status(data));
+  }
+
+  set_config() {
+    fetch("/set_config", {
+      method: "POST",
+      body: JSON.stringify({
+        ssid: this.state.config_ssid_user,
+        pwd: this.state.config_pwd_user,
+        ratio: this.state.config_ratio_user
+      })
+    }).then(function (response) {
+      if (response.ok) {
+        return response.json();
+      }
+      throw new Error('error');
+    }).then(data => this.update_config(data)).catch(err => {});
+  }
+
+  update_status(response_data) {
+    this.setState({
+      connection: true,
+      status_duration: response_data['t'],
+      status_direction: response_data['s']['d'],
+      status_speed: new Speed(response_data['s']['t'], response_data['s']['s'])
+    })
+  }
+
+  update_config(response_data) {
+    this.setState({
+      config_fetched: true,
+      config_ssid: response_data['ssid'],
+      config_pwd: response_data['pwd'],
+      config_ratio: response_data['ratio']
+    });
+  }
+
+  failed_handle(err) {
+    this.setState({connection: false, config_fetched: false})
+  }
 
   ///////> element callback
   trigger_visual_mode() {
@@ -222,19 +305,32 @@ class App extends React.Component {
   }
 
   handle_start_btn(event) {
-    console.log("start");
+    if (this.state.status_direction === DIRECTION.STOP) {
+      this.set_speed(this.state.input_direction, this.state.input_speed).catch(err => this.failed_handle(err));
+    } else {
+      this.set_speed(DIRECTION.STOP, new Speed(0, 0)).catch(err => this.failed_handle(err));
+    }
   }
 
   handle_btn_push(event) {
-    console.log("btn down");
+    if (this.state.status_direction !== DIRECTION.STOP) {
+      return;
+    }
+    this.setState({btn_touched: true})
+    this.set_speed(this.state.input_direction, this.state.input_speed).catch(err => {
+    });
   }
 
   handle_btn_release(event) {
-    console.log("btn up");
+    if (this.state.btn_touched) {
+      this.set_speed(DIRECTION.STOP, new Speed(0, 0)).catch(err => {
+      });
+      this.setState({btn_touched: false})
+    }
   }
 
   handle_config_save(event) {
-    console.log("save config");
+    this.set_config();
   }
 
   render() {
@@ -244,9 +340,9 @@ class App extends React.Component {
           <Button className="round_btn" bsSize="large" disabled={this.state.status_direction !== DIRECTION.STOP}
                   onClick={this.trigger_config.bind(this)}>设置</Button>
           <Button bsSize="large"
-            onClick={this.trigger_dir_mode.bind(this)}>{DIR_MODE.str(DIR_MODE.not(this.state.dir_mode))}</Button>
+                  onClick={this.trigger_dir_mode.bind(this)}>{DIR_MODE.str(DIR_MODE.not(this.state.dir_mode))}</Button>
           <Button bsSize="large"
-            onClick={this.trigger_visual_mode.bind(this)}>{VISUAL_MODE.str(VISUAL_MODE.not(this.state.visual_mode))}</Button>
+                  onClick={this.trigger_visual_mode.bind(this)}>{VISUAL_MODE.str(VISUAL_MODE.not(this.state.visual_mode))}</Button>
         </div>
         <div className="card-div">
           <Card>
@@ -260,9 +356,9 @@ class App extends React.Component {
                     <div className="info-pad">
                       <small>{DIR_MODE.str(this.state.dir_mode)}模式</small>
                       <p>{
-                        this.state.dir_mode === DIR_MODE.SKY ? 
-                          DIRECTION.str_clock(this.state.status_direction) : 
-                          DIRECTION.str(this.state.status_direction)}</p>
+                        this.state.dir_mode === DIR_MODE.SKY ?
+                          DIRECTION.str(this.state.status_direction) :
+                          DIRECTION.str_clock(this.state.status_direction)}</p>
                     </div>
                   </div>
                   <div>
@@ -327,7 +423,7 @@ class App extends React.Component {
                           <Form.Check.Input type={`radio`} name="direction_group" defaultChecked={i === 0}
                                             onChange={this.handle_direction_check.bind(this, d)}/>
                           <Form.Check.Label>{
-                            this.state.dir_mode === DIR_MODE.SKY ? 
+                            this.state.dir_mode === DIR_MODE.SKY ?
                               DIRECTION.str(d) : DIRECTION.str_clock(d)}</Form.Check.Label>
                         </Form.Check>
                       ))}
@@ -338,7 +434,7 @@ class App extends React.Component {
               <div className="in-card-btn-group">
                 <Button
                   onClick={this.handle_start_btn.bind(this)}>{this.state.status_direction === DIRECTION.STOP ? "开始" : "停止"}</Button>
-                <Button disabled={this.state.status_direction !== DIRECTION.STOP}
+                <Button disabled={this.state.status_direction !== DIRECTION.STOP && !this.state.btn_touched}
                         onTouchStart={this.handle_btn_push.bind(this)}
                         onMouseDown={this.handle_btn_push.bind(this)}
                         onTouchEnd={this.handle_btn_release.bind(this)}
@@ -390,7 +486,7 @@ class App extends React.Component {
             <Modal.Title>未连接</Modal.Title>
           </Modal.Header>
           <Modal.Body>
-            等待重连……
+            等待重连/赤道仪响应……
           </Modal.Body>
         </Modal>
       </div>

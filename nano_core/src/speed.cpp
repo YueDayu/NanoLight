@@ -6,9 +6,10 @@
 #include "configure.hpp"
 
 bool Speed::from_json(const char* str, int len) {
-    StaticJsonDocument<SPEED_JSON_STR_LEN> doc;
+    StaticJsonDocument<128> doc;
     auto err = deserializeJson(doc, str);
     if (err) {
+        Serial.println(err.c_str());
         return false;
     }
     int tmp = doc["d"];
@@ -101,9 +102,7 @@ Speed SpeedManager::get_speed(int id) {
     return Speed(dir, SpeedType::FACTOR, speed_tab[i]);
 }
 
-Direction neg(Direction d) {
-    return Direction(1 - uint32_t(d));
-}
+Direction neg(Direction d) { return Direction(1 - uint32_t(d)); }
 
 Speed SpeedManager::max_speed(Direction dir) {
     double stepper_step =
@@ -152,8 +151,7 @@ void SpeedManager::tick() {
             new_dir = neg(new_dir);
             stepper_step = -stepper_step;
         }
-        new_delay =
-            uint32_t(stepper_step * 1000000 / new_speed.to_degree());
+        new_delay = uint32_t(stepper_step * 1000000 / new_speed.to_degree());
         if (new_delay < MOTOR_MIN_DELAY_US) {
             new_delay = MOTOR_MIN_DELAY_US;
             new_speed = max_speed(new_speed.d);
@@ -166,6 +164,8 @@ void SpeedManager::tick() {
         motor_delay_ = new_delay;
         if (new_dir != Direction::STOP) {
             status_.start_time_ms = millis();
+        } else {
+            status_.start_time_ms = 0;
         }
         if (nullptr != dir_callback_) {
             dir_callback_(motor_dir_);
