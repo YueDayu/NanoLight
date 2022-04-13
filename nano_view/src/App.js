@@ -365,8 +365,8 @@ class App extends React.Component {
                     <h4>运行时长</h4>
                     <div className="info-pad">
                       <p>{(this.state.status_duration >= 60 ?
-                          (Math.floor(this.state.status_duration / 60) + '分钟') : "")
-                        + this.state.status_duration % 60 + '秒'}</p>
+                          (Math.floor(this.state.status_duration / 60) + '分') : "")
+                        + (Math.round(this.state.status_duration % 60 * 100) / 100) + '秒'}</p>
                     </div>
                   </div>
                 </div>
