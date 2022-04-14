@@ -112,7 +112,7 @@ Speed SpeedManager::max_speed(Direction dir) {
         dir = neg(dir);
     }
     return Speed(dir, SpeedType::DEGREE,
-                 1000000 / double(MOTOR_MIN_DELAY_US) * stepper_step);
+                 1000000 / double(MOTOR_MIN_DELAY_US) * stepper_step * 3600);
 }
 
 RunningStatus SpeedManager::get_status() const { return status_; }
