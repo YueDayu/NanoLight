@@ -6,6 +6,8 @@
 
 enum Direction { POS = 0, NEG = 1, STOP = 2 };
 
+// factor: s * degree_per_second
+// degree: degree per hour
 enum SpeedType { FACTOR = 0, DEGREE = 1 };
 
 static const int32_t SPEED_JSON_STR_LEN = 48;

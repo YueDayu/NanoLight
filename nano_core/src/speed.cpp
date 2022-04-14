@@ -34,7 +34,7 @@ double Speed::to_degree() const {
         return 0;
     }
     if (t == SpeedType::DEGREE) {
-        return s;
+        return s / 3600;
     }
     return s * DEGREE_PER_SEC;
 }
