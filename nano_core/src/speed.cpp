@@ -141,6 +141,13 @@ void SpeedManager::tick() {
     auto new_speed = get_speed(cur_status);
     last_status_ = cur_status;
 
+    if (new_speed.s == 0) {
+        new_speed.d = Direction::STOP;
+    } else if (new_speed.s < 0) {
+        new_speed.s = -new_speed.s;
+        new_speed.d = neg(new_speed.d);
+    }
+
     Direction new_dir = new_speed.d;
     uint32_t new_delay = 0;
     if (new_dir != Direction::STOP) {
