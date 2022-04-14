@@ -186,6 +186,9 @@ class App extends React.Component {
   }
 
   set_speed(dir, speed) {
+    if (speed.speed === 0) {
+      dir = DIRECTION.STOP;
+    }
     return fetch("/set_status", {
       method: "POST",
       body: JSON.stringify({
