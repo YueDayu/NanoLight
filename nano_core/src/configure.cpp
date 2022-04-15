@@ -8,9 +8,17 @@ bool DynamicConfig::load_json(const char* str, int len) {
     if (err) {
         return false;
     }
-    gearbox_ratio = doc["ratio"];
-    strcpy(ssid, doc["ssid"]);
-    strcpy(password, doc["pwd"]);
+    if (doc["ratio"] != 0) {
+        gearbox_ratio = doc["ratio"];
+    }
+    auto ssid_len = strlen(doc["ssid"]);
+    if (ssid_len > 0 && ssid_len <= 10) {
+        strcpy(ssid, doc["ssid"]);
+    }
+    auto pwd_len = strlen(doc["pwd"]);
+    if (pwd_len > 0 && pwd_len <= 10) {
+        strcpy(password, doc["pwd"]);
+    }
     return true;
 }
 
