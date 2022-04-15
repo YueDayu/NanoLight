@@ -12,11 +12,11 @@ bool Speed::from_json(const char* str, int len) {
         Serial.println(err.c_str());
         return false;
     }
+    s = doc["s"];
     int tmp = doc["d"];
-    d = Direction(tmp);
+    d = (s == 0) ? Direction::STOP : Direction(tmp);
     tmp = doc["t"];
     t = SpeedType(tmp);
-    s = doc["s"];
     return true;
 }
 
@@ -141,8 +141,9 @@ void SpeedManager::tick() {
     auto new_speed = get_speed(cur_status);
     last_status_ = cur_status;
 
-    if (new_speed.s == 0) {
+    if (new_speed.s > -1e-6 && new_speed.s < 1e-6) {
         new_speed.d = Direction::STOP;
+        new_speed.s = 0;
     } else if (new_speed.s < 0) {
         new_speed.s = -new_speed.s;
         new_speed.d = neg(new_speed.d);

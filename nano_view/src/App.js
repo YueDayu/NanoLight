@@ -208,9 +208,12 @@ class App extends React.Component {
     fetch("/set_config", {
       method: "POST",
       body: JSON.stringify({
-        ssid: this.state.config_ssid_user,
-        pwd: this.state.config_pwd_user,
-        ratio: this.state.config_ratio_user
+        ssid: this.state.config_ssid_user === "" ?
+                this.state.config_ssid : this.state.config_ssid_user,
+        pwd: this.state.config_pwd_user === "" ?
+                this.state.config_pwd : this.state.config_pwd_user,
+        ratio: this.state.config_ratio_user === 0 ?
+                this.state.config_ratio : this.state.config_ratio_user
       })
     }).then(function (response) {
       if (response.ok) {
@@ -234,8 +237,12 @@ class App extends React.Component {
       config_fetched: true,
       config_ssid: response_data['ssid'],
       config_pwd: response_data['pwd'],
-      config_ratio: response_data['ratio']
+      config_ratio: response_data['ratio'],
+      config_ssid_user: "",
+      config_pwd_user: "",
+      config_ratio_user: 0
     });
+    this.config_input_form_ref.reset();
   }
 
   failed_handle(err) {
