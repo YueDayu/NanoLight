@@ -62,6 +62,10 @@ bool RunningStatus::to_json(char* str,
 
 const double SpeedManager::speed_tab[] = {0, 0, 10, 30, 0.5, 50, 100, 1};
 
+void ticker_callback(SpeedManager* manager) {
+    manager->set_web_stop_speed();
+}
+
 SpeedManager::SpeedManager(int p1, int p2, int p3, int p4)
     : p1_(p1),
       p2_(p2),
@@ -124,6 +128,18 @@ bool SpeedManager::get_json_status(char* str, int cap_len, int* len) const {
 bool SpeedManager::set_web_speed(const Speed& speed) {
     web_speed_ = speed;
     return true;
+}
+
+bool SpeedManager::set_web_max_speed(Direction dir) {
+    return set_web_speed(max_speed(dir));
+}
+
+void SpeedManager::set_web_stop_speed() {
+    set_web_speed(Speed(Direction::STOP, SpeedType::DEGREE, 0));
+}
+
+void SpeedManager::start_ticker(int duration_ms) {
+    ticker_.once_ms(duration_ms, ticker_callback, this);
 }
 
 bool SpeedManager::set_web_json_speed(const char* str, int len) {

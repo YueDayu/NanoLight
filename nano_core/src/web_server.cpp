@@ -1,6 +1,8 @@
-#include "web_server.hpp"
+#include <ArduinoJson.h>
 
+#include "web_server.hpp"
 #include "configure.hpp"
+#include "speed.hpp"
 
 bool NanoServer::init(fs::FS& fs, SpeedManager* manager) {
     manager_ = manager;
@@ -17,6 +19,8 @@ bool NanoServer::init(fs::FS& fs, SpeedManager* manager) {
     server_.on("/config", HTTP_POST, [this]() { this->handle_config_query(); });
     server_.on("/set_config", HTTP_POST,
                [this]() { this->handle_config_set(); });
+    server_.on("/spin", HTTP_POST,
+               [this]() { this->handle_spin_certain_degree(); });
     return true;
 }
 
@@ -63,6 +67,32 @@ void NanoServer::handle_speed_set() {
     }
     manager_->need_update();
     handle_status_query();
+}
+
+void NanoServer::handle_spin_certain_degree() {
+    String arg = server_.arg(0);
+    StaticJsonDocument<128> doc;
+    auto err = deserializeJson(doc, arg.c_str());
+    if (err) {
+        Serial.println(err.c_str());
+        server_.send(500, "text/json", R"({"ret": false})");
+    }
+    double deg = doc["deg"];
+
+    // Only allow positive degree to simplify logic
+    if (!(deg >= 0 && deg < 360)) {
+        server_.send(500, "text/json", R"({"ret": false})");
+    }
+    int tmp = doc["d"];
+    Direction d = (deg == 0) ? Direction::STOP : Direction(tmp);
+
+    double stepper_step =
+        MOTOR_STEP_DEG / (MOTOR_STEP_NUM * Config::inst().data.gearbox_ratio);
+    double duration_ms = deg / (1000 / double(MOTOR_MIN_DELAY_US) * stepper_step);
+    if (!manager_->set_web_max_speed(d)) {
+        server_.send(500, "text/json", R"({"ret": false})");
+    }
+    manager_->start_ticker(duration_ms);
 }
 
 void NanoServer::handle_config_query() {

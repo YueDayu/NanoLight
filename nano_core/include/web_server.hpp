@@ -30,6 +30,7 @@ class NanoServer {
     void handle_speed_set();
     void handle_config_query();
     void handle_config_set();
+    void handle_spin_certain_degree();
 };
 
 #endif  // _WEBSERVER_HPP

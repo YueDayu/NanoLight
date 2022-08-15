@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <functional>
+#include <Ticker.h>
 
 enum Direction { POS = 0, NEG = 1, STOP = 2 };
 
@@ -55,6 +56,9 @@ class SpeedManager {
 
     bool set_web_speed(const Speed& speed);
     bool set_web_json_speed(const char* str, int len);
+    bool set_web_max_speed(Direction dir);
+    void set_web_stop_speed();
+    void start_ticker(int duration_ms);
 
     void need_update();
 
@@ -63,6 +67,7 @@ class SpeedManager {
  private:
     Speed get_speed(int id);
     Speed max_speed(Direction dir);
+    Ticker ticker_;
 
     static const double speed_tab[];
 
