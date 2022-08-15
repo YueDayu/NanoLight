@@ -93,6 +93,8 @@ void NanoServer::handle_spin_certain_degree() {
         server_.send(500, "text/json", R"({"ret": false})");
     }
     manager_->start_ticker(duration_ms);
+    manager_->need_update();
+    handle_config_query();
 }
 
 void NanoServer::handle_config_query() {
