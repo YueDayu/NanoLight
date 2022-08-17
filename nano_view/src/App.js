@@ -140,6 +140,7 @@ class App extends React.Component {
       // user input
       input_speed: this.default_speed_list[0],
       input_direction: this.default_direction_list[0],
+      input_degree: 0,
       btn_touched: false,
       // config info
       config_fetched: false,
@@ -195,6 +196,21 @@ class App extends React.Component {
         d: dir,
         t: speed.type,
         s: speed.speed
+      })
+    }).then(function (response) {
+      if (response.ok) {
+        return response.json();
+      }
+      throw new Error('error');
+    }).then(data => this.update_status(data));
+  }
+
+  set_spin_degree(dir, deg) {
+    return fetch("/spin", {
+      method: "POST",
+      body: JSON.stringify({
+        d: dir,
+        deg: deg
       })
     }).then(function (response) {
       if (response.ok) {
@@ -305,6 +321,15 @@ class App extends React.Component {
     }
   }
 
+  handle_degree_input(event) {
+    let v = this.degree_control.value;
+    if (v === "") {
+      this.setState({input_degree: 0});
+    } else {
+      this.setState({input_degree: parseInt(v)});
+    }
+  }
+
   handle_speed_radio(event) {
     let v = this.speed_check_control.value;
     if (v === "") {
@@ -319,6 +344,12 @@ class App extends React.Component {
       this.set_speed(this.state.input_direction, this.state.input_speed).catch(err => this.failed_handle(err));
     } else {
       this.set_speed(DIRECTION.STOP, new Speed(0, 0)).catch(err => this.failed_handle(err));
+    }
+  }
+
+  handle_degree_btn(event) {
+    if (this.state.input_degree !== 0) {
+      this.set_spin_degree(this.state.input_direction, this.state.input_degree).catch(err => this.failed_handle(err));
     }
   }
 
@@ -440,10 +471,27 @@ class App extends React.Component {
                     </div>
                   </div>
                 </div>
+                <div className="in-card-part">
+                  <div>
+                    <h4>旋转角度</h4>
+                    <div key={`degree_input`} className="direction_input">
+                      <Form.Check>
+                        <Form.Check.Label>
+                          <Form.Control ref={(el) => {
+                            this.degree_control = el;
+                          }} onChange={this.handle_degree_input.bind(this)} className={"in-check-control"} size="sm"
+                                        type="number"/> <span>°</span>
+                        </Form.Check.Label>
+                      </Form.Check>
+                    </div>
+                  </div>
+                </div>
               </div>
               <div className="in-card-btn-group">
                 <Button
                   onClick={this.handle_start_btn.bind(this)}>{this.state.status_direction === DIRECTION.STOP ? "开始" : "停止"}</Button>
+                <Button
+                  onClick={this.handle_degree_btn.bind(this)}>旋转</Button>
                 <Button disabled={this.state.status_direction !== DIRECTION.STOP && !this.state.btn_touched}
                         onTouchStart={this.handle_btn_push.bind(this)}
                         onMouseDown={this.handle_btn_push.bind(this)}
